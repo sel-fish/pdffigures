@@ -16,21 +16,21 @@ public:
                      bool quiet);
   double getModeFont();
 
-  bool wordIsLarge(TextWord *word);
+  bool wordIsLarge(const TextWord *word);
 
   int lineIsAligned(double x, double x2);
 
-  bool wordIsStandardFont(TextWord *word);
+  bool wordIsStandardFont(const TextWord *word);
 
   int lineIsAlignedToTol(double x, double x2, double l_tol, double r_tol);
 
-  bool isPageHeader(TextLine *line);
+  bool isPageHeader(const TextLine *line);
 
-  bool isPageNumber(TextLine *line);
+  bool isPageNumber(const TextLine *line);
 
   bool documentIsTwoColumn();
 
-  bool lineIsBold(TextLine *line);
+  bool lineIsBold(const TextLine *line);
 
   bool isBoldCentered(double x, double x2);
 
@@ -62,15 +62,15 @@ private:
 void printTextProperties(TextPage *page, DocumentStatistics *docStats,
                          bool onlyLineStarts);
 
-std::vector<TextLine *> getLines(TextPage *textPage);
+std::vector<const TextLine *> getLines(TextPage *textPage);
 
-void getTextLineBB(TextLine *line, double *minX, double *minY, double *maxX,
+void getTextLineBB(const TextLine *line, double *minX, double *minY, double *maxX,
                    double *maxY);
 
-bool wordIsItalic(TextWord *const word);
+bool wordIsItalic(const TextWord *word);
 
-bool wordIsBold(TextWord *const word);
+bool wordIsBold(const TextWord *word);
 
-bool wordEndsWithPeriod(TextWord *const word);
+bool wordEndsWithPeriod(const TextWord *word);
 
 #endif

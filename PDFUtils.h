@@ -11,20 +11,26 @@
 
 #include <leptonica/allheaders.h>
 
+typedef unsigned char Guchar;
+typedef bool GBool;
+#define gTrue true
+#define gFalse false
+#define getCString c_str
+
 enum FigureType { FIGURE, TABLE };
 
 const char *getFigureTypeString(FigureType type);
 
 class CaptionStart {
 public:
-  CaptionStart(int page, int number, TextWord *word, FigureType type);
+  CaptionStart(int page, int number, const TextWord *word, FigureType type);
 
   int page;
   FigureType type;
   int number;
 
   // First word of the caption, i.e. 'Figure'
-  TextWord *word;
+  const TextWord *word;
 };
 
 class Caption {

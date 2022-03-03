@@ -39,19 +39,19 @@ const std::regex titleNumberRegex =
     std::regex("^[0-9]{1,2}(\\.[0-9]{1,3})?\\.?$");
 
 // Pulls lines that appear to be titles from lines
-std::vector<TextLine *> getTitleLines(std::vector<TextLine *> &lines, int page,
+std::vector<const TextLine *> getTitleLines(std::vector<const TextLine *> &lines, int page,
                                       DocumentStatistics &docStats,
                                       bool verbose) {
-  std::vector<TextLine *> lineStarts = std::vector<TextLine *>();
-  std::vector<TextLine *> boldLines = std::vector<TextLine *>();
-  std::vector<TextLine *> titles = std::vector<TextLine *>();
+  std::vector<const TextLine *> lineStarts = std::vector<const TextLine *>();
+  std::vector<const TextLine *> boldLines = std::vector<const TextLine *>();
+  std::vector<const TextLine *> titles = std::vector<const TextLine *>();
 
   if (page == 0) {
     // Cheap heurstic, text above the abstract is title,
     // otherwise author names ect. at top can cause problems
     int abstractY = -1;
     for (size_t i = 0; i < lines.size(); ++i) {
-      TextWord *word = lines.at(i)->getWords();
+      const TextWord *word = lines.at(i)->getWords();
       if (strcmp(word->getText()->getCString(), "Abstract") == 0) {
         double x, y, x2, y2;
         word->getBBox(&x, &y, &x2, &y2);
@@ -105,13 +105,13 @@ std::vector<TextLine *> getTitleLines(std::vector<TextLine *> &lines, int page,
   // they are titles
   size_t i = 0;
   while (i < lines.size()) {
-    TextLine *line = lines.at(i);
+    const TextLine *line = lines.at(i);
     if (not docStats.lineIsBold(line)) {
       ++i;
       continue;
     }
 
-    TextWord *word = line->getWords();
+    const TextWord *word = line->getWords();
     bool isTitleStart =
         regex_match(word->getText()->getCString(), titleNumberRegex);
     double x = 0, y = 0, x2 = 0, y2 = 0;
@@ -120,7 +120,7 @@ std::vector<TextLine *> getTitleLines(std::vector<TextLine *> &lines, int page,
     if (docStats.isBoldCentered(x, x2) and
         not(word->getNext() == NULL and word->getText()->getLength() <= 4) and
         word->getFontSize() > docStats.getModeFont()) {
-      TextLine *nextLine = line->getNext();
+      const TextLine *nextLine = line->getNext();
       if (nextLine != NULL) {
         double nx, ny, nx2, ny2;
         nextLine->getWords()->getBBox(&nx, &ny, &nx2, &ny2);
@@ -158,7 +158,7 @@ std::vector<TextLine *> getTitleLines(std::vector<TextLine *> &lines, int page,
   }
 
   // Try to match line starts with bold lines
-  for (TextLine *line : lineStarts) {
+  for (const TextLine *line : lineStarts) {
     double x, y, x2, y2;
     getTextLineBB(line, &x, &y, &x2, &y2);
     for (size_t j = 0; j < boldLines.size(); ++j) {
@@ -188,7 +188,7 @@ PageRegions getPageRegions(PIX *original, TextPage *text, PIX *graphics,
   PIX *scratch;
   PIXA *steps = showSteps ? steps = pixaCreate(4) : NULL;
 
-  std::vector<TextLine *> lines = getLines(text);
+  std::vector<const TextLine *> lines = getLines(text);
 
   BOXA *otherText = boxaCreate((int)lines.size());
   BOXA *bodyText = boxaCreate((int)lines.size());
@@ -204,18 +204,18 @@ PageRegions getPageRegions(PIX *original, TextPage *text, PIX *graphics,
   const int r_pad = 0;
   const int h_pad = 3;
   PIX *pix1;
-  std::vector<TextLine *> titles =
+  std::vector<const TextLine *> titles =
       getTitleLines(lines, page, docStats, verbose);
-  for (TextLine *title : titles) {
+  for (const TextLine *title : titles) {
     double x, y, x2, y2;
     getTextLineBB(title, &x, &y, &x2, &y2);
     boxaAddBox(bodyText, boxCreate(x - 3, y - 3, x2 - x + 6, y2 - y + 6),
                L_CLONE);
   }
 
-  for (TextLine *line : lines) {
+  for (const TextLine *line : lines) {
     bool rotated = line->getWords()->getRotation() != 0;
-    TextWord *word = line->getWords();
+    const TextWord *word = line->getWords();
     // Loop over words in the line
     while (word != NULL) {
       double lineX, lineY, lineX2, lineY2;
@@ -355,7 +355,7 @@ PageRegions getPageRegions(PIX *original, TextPage *text, PIX *graphics,
   for (int i = 0; i < otherText->n; ++i) {
     BOX *curBox = otherText->box[i];
     float graphicOverlap;
-    pixAverageInRect(graphicMask, curBox, &graphicOverlap);
+    pixAverageInRect(graphicMask, NULL, curBox, 0, 255, 1, &graphicOverlap);
     bool isBody;
     if (graphicOverlap > 0.40) {
       isBody = false;

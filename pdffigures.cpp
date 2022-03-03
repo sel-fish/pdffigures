@@ -144,7 +144,8 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  globalParams = new GlobalParams(); // Set up poppler
+  // setLeptDebugOK(1);
+  globalParams = std::make_unique<GlobalParams>();
   // Build a writable str to pass to setTextEncoding
   std::string str = "UTF-8";
   std::vector<char> writableStr(str.begin(), str.end());

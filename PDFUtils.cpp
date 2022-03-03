@@ -8,7 +8,8 @@
 
 #include "PDFUtils.h"
 
-CaptionStart::CaptionStart(int page, int number, TextWord *word,
+
+CaptionStart::CaptionStart(int page, int number, const TextWord *word,
                            FigureType type)
     : page(page), type(type), number(number), word(word) {}
 
@@ -66,7 +67,7 @@ public:
 
   virtual void drawImage(GfxState *state, Object *ref, Stream *str, int width,
                          int height, GfxImageColorMap *colorMap,
-                         GBool interpolate, int *maskColors, GBool inlineImg) {
+                         GBool interpolate, const int *maskColors, GBool inlineImg) {
     if (width > maxWidth and height > maxHeight)
       filled = true;
   }
@@ -116,18 +117,18 @@ public:
 
   void endStringOp(GfxState *state) override {}
 
-  void beginString(GfxState *state, GooString *str) override {}
+  void beginString(GfxState *state, const GooString *str) override {}
 
   void endString(GfxState *state) override {}
 
   void drawChar(GfxState *state, double x, double y, double dx, double dy,
                 double originX, double originY, CharCode code, int nBytes,
-                Unicode *u, int uLen) override {}
+                const Unicode *u, int uLen) override {}
 
-  void drawString(GfxState *state, GooString *str) override {}
+  void drawString(GfxState *state, const GooString *str) override {}
 
   GBool beginType3Char(GfxState *state, double x, double y, double dx,
-                       double dy, CharCode code, Unicode *u, int uLen) override {
+                       double dy, CharCode code, const Unicode *u, int uLen) override {
     // TODO decide if true is correct
     return gFalse;
   }
@@ -140,7 +141,7 @@ public:
 
   void incCharCount(int nChars) override {}
 
-  void beginActualText(GfxState *state, GooString *text) override {}
+  void beginActualText(GfxState *state, const GooString *text) override {}
 
   void endActualText(GfxState *state) override {}
 };
@@ -303,7 +304,7 @@ GooString *jsonSanitizeUTF8(GooString *str) {
 void writeText(TextPage *page, BOX *bb, const char *name,
                std::ostream &output) {
   output << "\"" << name << "\" : [";
-  TextWordList *words = page->makeWordList(gFalse);
+  auto words = page->makeWordList(gFalse);
   bool firstWord = true;
   for (int j = 0; j < words->getLength(); ++j) {
     TextWord *word = words->get(j);
@@ -330,7 +331,7 @@ void writeText(TextPage *page, BOX *bb, const char *name,
     }
   }
   output << "\n]";
-  delete words;
+  // delete words;
 }
 
 void saveFiguresImage(std::vector<Figure> &figures, PIX *original,
@@ -387,7 +388,7 @@ void writeFigureJSON(Figure &fig, int width, int height, double dpi,
     output << fig.captionBB->y + fig.captionBB->h << "],\n";
     BOX *bb = fig.captionBB;
     GooString *caption = jsonSanitizeUTF8(
-        page->getText(bb->x, bb->y, bb->x + bb->w, bb->y + bb->h));
+        page->getText(bb->x, bb->y, bb->x + bb->w, bb->y + bb->h, eolUnix));
     output << "\"Caption\": \"" << caption->getCString() << "\",\n";
     delete caption;
   }

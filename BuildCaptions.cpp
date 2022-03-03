@@ -6,7 +6,7 @@
 namespace {
 
 // Debugging method
-void printLine(std::vector<TextWord *> line, const char *header) {
+void printLine(std::vector<const TextWord *> line, const char *header) {
   printf("%s:", header);
   for (size_t i = 0; i < line.size(); ++i) {
     printf("%s ", line.at(i)->getText()->getCString());
@@ -15,15 +15,15 @@ void printLine(std::vector<TextWord *> line, const char *header) {
 }
 
 // Gather all the TextWord objects in a page
-std::vector<TextWord *> collectWords(TextPage *page) {
-  std::vector<TextWord *> words = std::vector<TextWord *>();
-  TextFlow *flow = page->getFlows();
+std::vector<const TextWord *> collectWords(TextPage *page) {
+  std::vector<const TextWord *> words = std::vector<const TextWord *>();
+  const TextFlow *flow = page->getFlows();
   while (flow != NULL) {
-    TextBlock *block = flow->getBlocks();
+    const TextBlock *block = flow->getBlocks();
     while (block != NULL) {
-      TextLine *line = block->getLines();
+      const TextLine *line = block->getLines();
       while (line != NULL) {
-        TextWord *word = line->getWords();
+        const TextWord *word = line->getWords();
         while (word != NULL) {
           words.push_back(word);
           word = word->getNext();
@@ -46,10 +46,10 @@ public:
   CaptionRegion(double x, double y, double x2, double y2, double xLimit)
       : x(x), y(y), x2(x2), y2(y2), xLimit(xLimit), numLines(0),
         alignment(UNKNOWN) {
-    words = std::vector<TextWord *>();
+    words = std::vector<const TextWord *>();
   }
 
-  void addWord(TextWord *word) {
+  void addWord(const TextWord *word) {
     words.push_back(word);
     double wx, wy, wx2, wy2;
     word->getBBox(&wx, &wy, &wx2, &wy2);
@@ -59,7 +59,7 @@ public:
     y = std::min(wy, y);
   }
 
-  void addLine(std::vector<TextWord *> words) {
+  void addLine(std::vector<const TextWord *> words) {
     for (size_t i = 0; i < words.size(); ++i) {
       addWord(words.at(i));
     }
@@ -75,12 +75,12 @@ public:
   double xLimit;
   int numLines;
   Alignment alignment;
-  std::vector<TextWord *> words;
+  std::vector<const TextWord *> words;
 };
 
 // Point where a word starts
 typedef std::pair<double, double> EdgeLocation;
-EdgeLocation getEdge(TextWord *word) {
+EdgeLocation getEdge(const TextWord *word) {
   double x, y, x2, y2;
   word->getBBox(&x, &y, &x2, &y2);
   return EdgeLocation(x, (y + y2) / 2.0);
@@ -91,7 +91,7 @@ EdgeLocation getEdge(TextWord *word) {
    part of a caption. We use this to help know when stop 'expanding' captions
    to the right.
  */
-std::vector<EdgeLocation> getParagraphEdges(std::vector<TextWord *> &words,
+std::vector<EdgeLocation> getParagraphEdges(std::vector<const TextWord *> &words,
                                             std::vector<CaptionStart> starts) {
   std::vector<EdgeLocation> paragraphEdges = std::vector<EdgeLocation>();
   for (size_t i = 0; i < starts.size(); ++i) {
@@ -148,8 +148,8 @@ std::vector<EdgeLocation> getParagraphEdges(std::vector<TextWord *> &words,
    between words.
  */
 double extendLineRightFromCandidates(double x2, double xLimit,
-                                     std::vector<TextWord *> &yAlignedWords,
-                                     std::vector<TextWord *> &lineWords) {
+                                     std::vector<const TextWord *> &yAlignedWords,
+                                     std::vector<const TextWord *> &lineWords) {
   bool foundCandidate = false;
   do {
     foundCandidate = false;
@@ -171,7 +171,7 @@ double extendLineRightFromCandidates(double x2, double xLimit,
    Returns the largest x coordinate of the word that is not a paragraph edge and
    does not come after a paragraphic edge found inside paragraphEdges.
  */
-double getHorizontalLimit(std::vector<TextWord *> yAlignedWords,
+double getHorizontalLimit(std::vector<const TextWord *> yAlignedWords,
                           std::vector<EdgeLocation> &paragraphEdges) {
   double maxX = 99999999;
   for (size_t j = 0; j < yAlignedWords.size(); ++j) {
@@ -186,9 +186,9 @@ double getHorizontalLimit(std::vector<TextWord *> yAlignedWords,
 }
 
 // Extract words that are found between after x and between y and y2
-std::vector<TextWord *> getYAlignedWords(double x, double y, double y2,
-                                         std::vector<TextWord *> &words) {
-  std::vector<TextWord *> yAlignedWords = std::vector<TextWord *>();
+std::vector<const TextWord *> getYAlignedWords(double x, double y, double y2,
+                                         std::vector<const TextWord *> &words) {
+  std::vector<const TextWord *> yAlignedWords = std::vector<const TextWord *>();
   for (size_t j = 0; j < words.size(); ++j) {
     double wx, wy, wx2, wy2;
     words.at(j)->getBBox(&wx, &wy, &wx2, &wy2);
@@ -202,7 +202,7 @@ std::vector<TextWord *> getYAlignedWords(double x, double y, double y2,
 }
 
 // Adds a line to region, return false iff no line could be found.
-bool addLine(std::vector<TextWord *> &words, BOXA *graphicBoxes,
+bool addLine(std::vector<const TextWord *> &words, BOXA *graphicBoxes,
              std::vector<EdgeLocation> &paragraphEdges, CaptionRegion &region,
              int verbose) {
 
@@ -221,12 +221,12 @@ bool addLine(std::vector<TextWord *> &words, BOXA *graphicBoxes,
   double x = region.x;
   double x2 = region.x2;
   double y2 = region.y2;
-  TextWord *word = NULL;
+  const TextWord *word = NULL;
   double startX2 = -1;
   double startX = -1;
   double startY2 = -1;
   double startY = -1;
-  std::vector<TextWord *> yAlignedWords = std::vector<TextWord *>();
+  std::vector<const TextWord *> yAlignedWords = std::vector<const TextWord *>();
   for (size_t j = 0; j < words.size(); ++j) {
     double wx, wy, wx2, wy2;
     words.at(j)->getBBox(&wx, &wy, &wx2, &wy2);
@@ -248,7 +248,7 @@ bool addLine(std::vector<TextWord *> &words, BOXA *graphicBoxes,
   if (verbose >= 2)
     printLine(yAlignedWords, "Candidates");
   double xLimit = getHorizontalLimit(yAlignedWords, paragraphEdges);
-  std::vector<TextWord *> line = std::vector<TextWord *>();
+  std::vector<const TextWord *> line = std::vector<const TextWord *>();
   line.push_back(word);
   startX2 = extendLineRightFromCandidates(
       startX2, std::min(region.xLimit, xLimit), yAlignedWords, line);
@@ -301,14 +301,14 @@ bool addLine(std::vector<TextWord *> &words, BOXA *graphicBoxes,
 
 // Builds a caption from CaptionStart
 Caption buildCaption(CaptionStart start, DocumentStatistics &docStats,
-                     std::vector<TextWord *> &allWords,
+                     std::vector<const TextWord *> &allWords,
                      std::vector<EdgeLocation> &paragraphEdges,
                      BOXA *graphicBoxes, int verbose) {
   double x, y, x2, y2;
   start.word->getBBox(&x, &y, &x2, &y2);
-  std::vector<TextWord *> words = std::vector<TextWord *>();
+  std::vector<const TextWord *> words = std::vector<const TextWord *>();
   words.push_back(start.word);
-  std::vector<TextWord *> yAlignedWords = getYAlignedWords(x, y, y2, allWords);
+  std::vector<const TextWord *> yAlignedWords = getYAlignedWords(x, y, y2, allWords);
   double xLimit = getHorizontalLimit(yAlignedWords, paragraphEdges);
   x2 = extendLineRightFromCandidates(x2, xLimit, yAlignedWords, words);
   CaptionRegion captionRegion = CaptionRegion(x, y, x2, y2, xLimit);
@@ -336,7 +336,7 @@ std::vector<Caption> buildCaptions(std::vector<CaptionStart> &starts,
                                    DocumentStatistics &docStats, TextPage *text,
                                    PIX *graphics, int verbose) {
   std::vector<Caption> captions = std::vector<Caption>();
-  std::vector<TextWord *> words = collectWords(text);
+  std::vector<const TextWord *> words = collectWords(text);
   std::vector<EdgeLocation> paragraphEdges = getParagraphEdges(words, starts);
   BOXA *graphicBoxes = pixConnCompBB(graphics, 8);
   for (size_t i = 0; i < starts.size(); ++i) {
